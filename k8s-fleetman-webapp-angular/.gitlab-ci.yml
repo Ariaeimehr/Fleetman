@@ -1,0 +1,36 @@
+variables: 
+ REGISTRY: 192.168.1.83:8085
+ REGISTRY_USERNAME: admin
+ REGISTRY_PASSWORD: Applemiz123
+ APP_NAME: webapp-angular
+ CURRENT_VERSION: v2.1
+ NEW_VERSION: v2.1
+ MANIFEST_NAME: 
+
+stages: 
+  - build
+  - deploy 
+
+build_job:
+  stage: build
+  tags:
+  - maven
+  script:
+  - cd $APP_NAME
+  - docker image build . -t $REGISTRY/$APP_NAME:$NEW_VERSION
+  - echo $REGISTRY_PASSWORD > password
+  - cat ./password | docker login -u $REGISTRY_USERNAME --password-stdin $REGISTRY
+  - docker image push $REGISTRY/$APP_NAME:$NEW_VERSION 
+  - echo " image pushed "
+
+deploy_job:
+  stage: deploy
+  when: manual
+  tags:
+  - manager
+  script:
+  - cd manifest/
+  - sed -i 's/$CURRENT_VERSION/$NEW_VERSION/g' $MANIFEST_NAME
+  - export KUBECONFIG=/home/gitlab-runner/.kube/config
+  - kubectl apply -f $MANIFEST_NAME
+   

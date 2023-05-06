@@ -1,0 +1,8 @@
+apiVersion: v1
+data:
+  SPRING_PROFILE_ACTIVE: production-microservice
+kind: ConfigMap
+metadata:
+  name: variables
+  resourceVersion: "88628"
+  uid: e1f70a24-3662-49ac-b4c5-0071fb504cbd

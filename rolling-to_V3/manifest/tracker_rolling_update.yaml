@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: position-tracker
+  labels:
+    app: positiontracker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+     app: v2
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: v2
+    spec: 
+      containers: 
+         - name: k8s-fleetman-position-similator
+           image: docker.io/richardchesterwood/k8s-fleetman-position-tracker:release3
+           imagePullPolicy: IfNotPresent
+           env:
+             - name: SPRING_PROFILES_ACTIVE
+               valueFrom:
+                 configMapKeyRef:
+                    name: variables
+                    key: SPRING_PROFILES_ACTIVE
+--- 
+           
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: positiontracker
+  name: fleetman-position-tracker
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: v2
+  type: ClusterIP
+
+---
+
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: position-tracker
+spec:
+  maxReplicas: 10
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: position-tracker
+  targetCPUUtilizationPercentage: 50
+status:
+  currentReplicas: 0
+  desiredReplicas: 0
